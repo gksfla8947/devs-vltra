@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import AiDescription from "./AiDescription";
 
 interface PublishModalProps {
   title: string;
   slug: string;
   description: string;
+  getBlocks: () => unknown[];
   published: boolean;
   onSlugChange: (slug: string) => void;
   onDescriptionChange: (desc: string) => void;
@@ -20,6 +21,7 @@ export default function PublishModal({
   title,
   slug,
   description,
+  getBlocks,
   published,
   onSlugChange,
   onDescriptionChange,
@@ -64,7 +66,9 @@ export default function PublishModal({
 
             {/* Description */}
             <div>
+              <AiDescription title={title} getBlocks={getBlocks} onApply={onDescriptionChange} disabled={saving} />
               <textarea
+                id="post-description"
                 value={description}
                 onChange={(e) => onDescriptionChange(e.target.value)}
                 placeholder="당신의 포스트를 짧게 소개해보세요."

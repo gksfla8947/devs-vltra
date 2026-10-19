@@ -194,6 +194,7 @@ export default function EditPostPage({
           title={title}
           slug={slug}
           description={description}
+          getBlocks={() => editorRef.current?.getBlocks() ?? []}
           published={published}
           onSlugChange={() => {}}
           onDescriptionChange={setDescription}

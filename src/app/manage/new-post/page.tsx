@@ -254,6 +254,7 @@ function NewPostInner() {
           title={title}
           slug={slug}
           description={description}
+          getBlocks={() => editorRef.current?.getBlocks() ?? []}
           published={published}
           onSlugChange={(s) => { setSlugManual(true); setSlug(s); }}
           onDescriptionChange={setDescription}
