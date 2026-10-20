@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { createPost } from "../actions";
-import AiTagInput from "@/components/editor/AiTagInput";
+import TagInput from "@/components/editor/TagInput";
 import CategoryInput from "@/components/editor/CategoryInput";
 import PublishModal from "@/components/editor/PublishModal";
 import { draftStorage } from "@/hooks/useDraft";
@@ -228,7 +228,7 @@ function NewPostInner() {
         <div className="w-16 h-[6px] rounded-full bg-gray-200 mb-5" />
 
         <div className="mb-8">
-          <AiTagInput tags={tags} onChange={setTags} title={title} getBlocks={() => editorRef.current?.getBlocks() ?? []} />
+          <TagInput tags={tags} onChange={setTags} />
         </div>
 
         <div className="mb-8">
@@ -254,7 +254,6 @@ function NewPostInner() {
           title={title}
           slug={slug}
           description={description}
-          getBlocks={() => editorRef.current?.getBlocks() ?? []}
           published={published}
           onSlugChange={(s) => { setSlugManual(true); setSlug(s); }}
           onDescriptionChange={setDescription}
