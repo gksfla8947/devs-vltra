@@ -1,5 +1,5 @@
 import { getAllPosts } from "@/lib/posts";
-import HeroIllustration from "@/components/HeroIllustration";
+import LatestPosts from "@/components/LatestPosts";
 import PostList from "@/components/PostList";
 import { redis, postViewKey } from "@/lib/redis";
 
@@ -26,49 +26,14 @@ export default async function HomePage() {
     count,
   }));
 
+  const summaries = posts.map(({ slug, title, date, description, tags, category, thumbnail, coverImage }) => ({
+    slug, title, date, description, tags, category, thumbnail, coverImage,
+  }));
+
   return (
-    <div className="animate-in">
-      {/* Hero Section */}
-      <section className="hero-pattern border-b border-[var(--card-border)]">
-        <div className="max-w-6xl mx-auto px-6 py-8 md:py-10">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-2 leading-tight">
-                <span className="gradient-text">DEVS</span>
-                <br />
-                <span className="gradient-text">VLTRA</span>
-              </h1>
-              <div className="mb-3" />
-
-              {/* Stats */}
-              <div className="flex gap-5">
-                <div className="stat-item">
-                  <div className="stat-number text-lg">{posts.length}</div>
-                  <div className="text-[10px] text-[var(--muted)] mt-0.5">Posts</div>
-                </div>
-                <div className="stat-item">
-                  <div className="stat-number text-lg">{categories.length}</div>
-                  <div className="text-[10px] text-[var(--muted)] mt-0.5">Categories</div>
-                </div>
-                <div className="stat-item">
-                  <div className="stat-number text-lg">
-                    {Array.from(new Set(posts.flatMap((p) => p.tags))).length}
-                  </div>
-                  <div className="text-[10px] text-[var(--muted)] mt-0.5">Tags</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Illustration */}
-            <div className="hidden sm:block flex-shrink-0">
-              <HeroIllustration />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Posts + Sidebar */}
-      <PostList posts={posts} categories={categories} viewsMap={viewsMap} />
+    <div className="home-shell">
+      <LatestPosts posts={summaries.slice(0, 5)} />
+      <PostList posts={summaries} categories={categories} viewsMap={viewsMap} />
     </div>
   );
 }
