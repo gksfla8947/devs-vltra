@@ -111,7 +111,7 @@ body {
 @media (hover: hover) {
   .post-card:hover { transform: translateY(-3px); }
   .post-card:hover .post-card-title { color: var(--accent); }
-  .post-card-media:hover .post-cover { transform: scale(1.04); }
+  .post-card:hover .post-cover { transform: scale(1.04); }
 }
 .post-card:focus-within .post-card-title { color: var(--accent); }
 .view-switch { display: flex; gap: 4px; }
@@ -167,7 +167,7 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   .post-card, .post-card-media .post-cover, .post-card-title, .carousel-dot span, .category-filter { transition: none; }
-  .post-card:hover, .post-card-media:hover .post-cover { transform: none; }
+  .post-card:hover, .post-card:hover .post-cover { transform: none; }
 }
 
 /* MDX prose styling */
