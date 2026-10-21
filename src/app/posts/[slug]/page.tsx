@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getAllPostsForBuild, getPostBySlug } from "@/lib/posts";
+import { getPostSummaries, getPostBySlug } from "@/lib/posts";
 import { format } from "date-fns";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -24,12 +24,9 @@ type Params = Promise<{ slug: string }>;
 // 일반 흐름(글 작성/수정/삭제)은 actions.ts 의 revalidateAllPostPages 로 즉시 무효화됨.
 export const revalidate = 3600;
 
+// Generate/cache each article on its first visit instead of reading every body at build time.
 export async function generateStaticParams() {
-  // getAllPostsForBuild 가 DB flake 를 흡수해 빈 배열을 반환. Next.js 의
-  // dynamicParams=true(기본값) 덕분에 슬러그 미등록 페이지는 첫 요청 시 동적
-  // 렌더 후 캐시. 다음 빌드에서 DB 가 정상이면 SSG 가 자동 회복.
-  const posts = await getAllPostsForBuild();
-  return posts.map((post) => ({ slug: post.slug }));
+  return [];
 }
 
 const BASE_URL = "https://devs-vltra.vercel.app";
@@ -67,9 +64,7 @@ export default async function PostPage({ params }: { params: Params }) {
   const post = await getPostBySlug(slug);
   if (!post) notFound();
 
-  // 빌드 캐시(getAllPostsForBuild → 내부 Map) 덕분에 DB 추가 호출 없음.
-  // Neon flake 로 비어 있을 때도 nav/list 가 그냥 안 보일 뿐 페이지는 정상 렌더.
-  const allPosts = await getAllPostsForBuild();
+  const allPosts = await getPostSummaries();
 
   return (
     <article className="animate-in">

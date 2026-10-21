@@ -1,6 +1,10 @@
 import { db } from "./db";
 import { posts } from "./db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
+import { cache } from "react";
+import type { PostSummary } from "./post-summary";
+import { POST_LIST_TAG, postCacheTag, POST_CACHE_SECONDS } from "./post-cache";
 import { withDbRetry } from "./db/retry";
 
 export interface Post {
@@ -91,82 +95,49 @@ function dbPostToPost(row: typeof posts.$inferSelect): Post {
 }
 
 /**
- * 빌드 프로세스 내 메모리 캐시.
- *
- * Vercel 의 Next.js SSG 는 `generateStaticParams` 가 슬러그 목록을 반환한 뒤
- * 페이지마다 다시 `getPostBySlug` 를 호출한다. 포스트 52개면 DB 호출 53회 —
- * Neon serverless 의 control-plane flake 가 그중 하나만 맞아도 빌드가 통째로
- * 죽는다. 첫 `getAllPosts` 결과를 그대로 캐싱하고 그 뒤의 `getPostBySlug`
- * 호출은 이 캐시에서 응답해 DB 호출을 1회로 줄인다.
- *
- * 런타임(서버 요청)에는 매 invocation 이 새 프로세스라 module-level 변수는
- * 자연스럽게 사라져 신선도 문제가 없다. 빌드(단일 워커 프로세스) 안에서만 의미.
+ * Cache Components is not enabled in this app; use the existing Data Cache API.
+ * Project only listing fields. Extract the cover URL in PostgreSQL so neither
+ * HTML nor BlockNote JSON crosses the DB connection for listing requests.
+ * Errors propagate: an outage must never be cached as an empty publication list.
  */
-let _buildCacheBySlug: Map<string, Post> | null = null;
-
-export async function getAllPosts(): Promise<Post[]> {
-  // SSG 빌드에서 페이지당 60초 한도가 있어 hang 도 retry 대상으로 만든다.
+export const getPostSummaries = cache(unstable_cache(async (): Promise<PostSummary[]> => {
   const rows = await withDbRetry(() =>
-    db
-      .select()
-      .from(posts)
-      .where(eq(posts.published, true))
-      .orderBy(desc(posts.date)),
+    db.select({
+      slug: posts.id,
+      title: posts.title,
+      date: posts.date,
+      description: posts.description,
+      category: posts.category,
+      tags: posts.tags,
+      coverImage: sql<string | null>`substring(${posts.contentHtml} from '<img[^>]+src="([^"]+)"')`,
+    }).from(posts).where(eq(posts.published, true)).orderBy(desc(posts.date), desc(posts.id)),
   );
+  return rows.map((row) => ({
+    ...row,
+    description: row.description ?? "",
+    tags: row.tags ?? [],
+    thumbnail: slugToThumbnail(row.slug),
+  }));
+}, ["post-summaries-v1"], { tags: [POST_LIST_TAG], revalidate: POST_CACHE_SECONDS }));
 
-  const list = rows.map(dbPostToPost);
-
-  // 빌드 페이즈에서만 캐시 — 런타임에선 매 요청 신선한 데이터를 가져온다.
-  if (process.env.NEXT_PHASE === "phase-production-build") {
-    _buildCacheBySlug = new Map(list.map((p) => [p.slug, p]));
-  }
-
-  return list;
-}
-
-export async function getPostBySlug(slug: string): Promise<Post | null> {
-  // 빌드 중에는 generateStaticParams 가 미리 채워둔 캐시를 우선 사용.
-  const cached = _buildCacheBySlug?.get(slug);
-  if (cached) return cached;
-
-  const rows = await withDbRetry(() =>
-    db.select().from(posts).where(eq(posts.id, slug)).limit(1),
-  );
-
-  if (rows.length === 0) return null;
-
-  const row = rows[0];
-  // Allow viewing even unpublished posts by direct slug
-  return dbPostToPost(row);
-}
-
-/**
- * 빌드 안전 버전: Neon 이 응답 없을 때 빈 배열 반환.
- * SSG/sitemap 등 빌드 단계에서 DB flake 가 배포 전체를 죽이지 않도록 사용한다.
- * 런타임 핸들러에선 직접 getAllPosts 를 써서 진짜 에러가 보이게 두는 게 낫다.
- */
-export async function getAllPostsForBuild(): Promise<Post[]> {
-  try {
-    return await getAllPosts();
-  } catch (err) {
-    console.warn(
-      "[getAllPostsForBuild] DB unavailable, returning empty list:",
-      err,
+// Request memoization shares the metadata/page read; persistent caching is per slug.
+// Editing one post does not expire the cached bodies of every other post.
+export const getPostBySlug = cache(async (slug: string): Promise<Post | null> =>
+  unstable_cache(async () => {
+    const rows = await withDbRetry(() =>
+      db.select().from(posts).where(eq(posts.id, slug)).limit(1),
     );
-    return [];
-  }
-}
+    return rows.length ? dbPostToPost(rows[0]) : null;
+  }, ["post-detail-v1", slug], {
+    tags: [postCacheTag(slug)],
+    revalidate: POST_CACHE_SECONDS,
+  })(),
+);
 
 export async function getAllCategories(): Promise<string[]> {
-  const allPosts = await getAllPosts();
-  const catSet = new Set<string>();
-  allPosts.forEach((post) => catSet.add(post.category));
-  return Array.from(catSet).sort();
+  return Array.from(new Set((await getPostSummaries()).map((post) => post.category))).sort();
 }
 
 export async function getAllTags(): Promise<string[]> {
-  const allPosts = await getAllPosts();
-  const tagSet = new Set<string>();
-  allPosts.forEach((post) => post.tags.forEach((tag) => tagSet.add(tag)));
-  return Array.from(tagSet).sort();
+  return Array.from(new Set((await getPostSummaries()).flatMap((post) => post.tags))).sort();
 }

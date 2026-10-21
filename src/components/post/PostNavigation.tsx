@@ -1,16 +1,16 @@
 import Link from "next/link";
-import type { Post } from "@/lib/posts";
+import type { PostSummary } from "@/lib/post-summary";
 
 interface PostNavigationProps {
   currentSlug: string;
   category: string;
-  allPosts: Post[];
+  allPosts: PostSummary[];
 }
 
 /**
  * 같은 카테고리 내 이전/다음 글 네비게이션.
  *
- * `allPosts` 는 `getAllPosts` 의 date desc 정렬을 그대로 받는다.
+ * `allPosts` 는 `getPostSummaries` 의 date desc 정렬을 그대로 받는다.
  * idx-1 = 더 최신 글 ("다음 글"), idx+1 = 더 오래된 글 ("이전 글").
  * 카테고리 경계에선 한쪽만 표시된다.
  */
@@ -48,7 +48,7 @@ function NavCard({
   post,
   direction,
 }: {
-  post: Post | null;
+  post: PostSummary | null;
   direction: "prev" | "next";
 }) {
   const isPrev = direction === "prev";

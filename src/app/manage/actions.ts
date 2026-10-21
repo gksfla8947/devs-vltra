@@ -5,7 +5,8 @@ import { posts, blobFiles } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { del } from "@vercel/blob";
 import { isAuthenticated } from "@/lib/auth";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { POST_LIST_TAG, postCacheTag } from "@/lib/post-cache";
 
 function assertAuth(authed: boolean) {
   if (!authed) throw new Error("Unauthorized");
@@ -20,6 +21,9 @@ function assertAuth(authed: boolean) {
  * (참조: next.js docs - revalidatePath/#revalidating-a-page-path)
  */
 function revalidateAllPostPages(currentSlug?: string) {
+  updateTag(POST_LIST_TAG);
+  if (currentSlug) updateTag(postCacheTag(currentSlug));
+  revalidatePath("/sitemap.xml");
   revalidatePath("/");
   revalidatePath("/posts/[slug]", "page");
   // 현재 글 자체도 즉시 무효화하면 admin 이 본인 변경을 새로고침 없이 즉시 확인 가능.
@@ -101,7 +105,7 @@ export async function deletePost(slug: string) {
   await db.delete(blobFiles).where(eq(blobFiles.postSlug, slug));
   await db.delete(posts).where(eq(posts.id, slug));
 
-  revalidateAllPostPages();
+  revalidateAllPostPages(slug);
   return { success: true };
 }
 

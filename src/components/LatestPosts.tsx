@@ -1,40 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { PostSummary } from "@/lib/post-summary";
 import PostCover from "./PostCover";
 
 export default function LatestPosts({ posts }: { posts: PostSummary[] }) {
   const [index, setIndex] = useState(0);
-  const [playing, setPlaying] = useState(true);
-  const [hovered, setHovered] = useState(false);
-  const [focused, setFocused] = useState(false);
+  const slideRef = useRef<HTMLDivElement>(null);
   const current = index % Math.max(posts.length, 1);
 
   useEffect(() => {
-    if (posts.length < 2 || !playing || hovered || focused) return;
-    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (posts.length < 2) return;
     const timer = window.setInterval(() => {
-      if (!motion.matches && !document.hidden) setIndex((value) => (value + 1) % posts.length);
+      setIndex((value) => (value + 1) % posts.length);
     }, 6500);
     return () => window.clearInterval(timer);
-  }, [posts.length, playing, hovered, focused]);
+  }, [posts.length]);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const animation = slideRef.current?.animate(
+      [{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "translateY(0)" }],
+      { duration: 450, easing: "cubic-bezier(.2,.7,.2,1)" },
+    );
+    return () => animation?.cancel();
+  }, [current]);
 
   const post = posts[current];
   if (!post) return null;
   function select(next: number) {
-    setPlaying(false);
     setIndex((next + posts.length) % posts.length);
   }
   return (
-    <section className="latest-posts" aria-label="최신 글 소개" aria-roledescription="캐러셀"
-      onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
-      onFocusCapture={() => setFocused(true)} onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}>
-      <div className="latest-slide" aria-live={playing && !hovered && !focused ? "off" : "polite"}>
+    <section className="latest-posts" aria-label="최신 글 소개" aria-roledescription="캐러셀">
+      <div className="latest-slide" ref={slideRef} aria-live="off">
         <div className="latest-copy">
-          <div className="flex flex-wrap gap-2 mb-6 text-xs font-semibold">
-            <span className="latest-badge">최신 아티클</span>
+          <div className="flex flex-wrap gap-3 mb-4 text-xs font-semibold">
+            <span className="latest-badge">최신 글</span>
             <span className="latest-badge text-[var(--muted)]">{post.category}</span>
           </div>
           <h1 className="latest-title"><Link href={`/posts/${post.slug}`}>{post.title}</Link></h1>
@@ -51,7 +54,6 @@ export default function LatestPosts({ posts }: { posts: PostSummary[] }) {
         <div className="flex items-center gap-1 ml-2">
           {posts.map((item, position) => <button type="button" key={item.slug} className="carousel-dot" aria-label={`${position + 1}번째 최신 글: ${item.title}`} aria-current={position === current ? "true" : undefined} onClick={() => select(position)}><span /></button>)}
         </div>
-        <button type="button" className="text-xs text-[var(--muted)] ml-2 p-2" aria-label={playing ? "자동 전환 일시정지" : "자동 전환 재생"} onClick={() => setPlaying(!playing)}>{playing ? "일시정지" : "재생"}</button>
       </div>}
     </section>
   );

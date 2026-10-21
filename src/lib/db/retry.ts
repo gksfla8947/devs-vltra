@@ -23,6 +23,14 @@ function isRetryableError(err: unknown): boolean {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const e = err as any;
 
+  // Quota exhaustion cannot be repaired by retrying, even if Neon marks it retryable.
+  const causes = [e, e.cause, e.sourceError, e.cause?.sourceError];
+  if (causes.some((cause) =>
+    cause?.status === 402 ||
+    (typeof cause?.message === "string" &&
+      /HTTP status 402|exceeded the quota/i.test(cause.message))
+  )) return false;
+
   // 0) 자체 발생 타임아웃은 항상 retryable.
   if (e[TIMEOUT_TAG] === true) return true;
 

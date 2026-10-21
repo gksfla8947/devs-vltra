@@ -14,17 +14,19 @@ export default function PostCard({ post, views }: { post: PostSummary; views?: n
     event.currentTarget.style.setProperty("--pointer-y", `${event.clientY - rect.top}px`);
   }
   return (
-    <article className="post-card" onPointerMove={moveGlow}>
+    <article className="post-card">
       <Link href={`/posts/${post.slug}`} className="post-card-link">
-        <PostCover post={post} />
+        <div className="post-card-media" onPointerMove={moveGlow}>
+          <PostCover post={post} />
+        </div>
         <div className="post-card-content">
           <span className="text-xs font-semibold text-[var(--accent)]">{post.category}</span>
-          <h3 className="mt-3 text-xl font-bold leading-snug tracking-tight line-clamp-2">{post.title}</h3>
-          <p className="mt-3 text-sm text-[var(--muted)] leading-relaxed line-clamp-2">{post.description}</p>
-          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-4 text-xs text-[var(--muted)]">
+          <h3 className="post-card-title">{post.title}</h3>
+          <p className="post-card-description">{post.description}</p>
+          <div className="post-card-tags">
             {post.tags.slice(0, 3).map((tag) => <span key={tag}>#{tag}</span>)}
           </div>
-          <div className="flex items-center justify-between gap-3 mt-auto pt-6 text-xs text-[var(--muted)]">
+          <div className="post-card-meta">
             <time dateTime={post.date}>{format(new Date(post.date), "yyyy.MM.dd")}</time>
             {views !== undefined && <span>조회 {views.toLocaleString()}</span>}
           </div>

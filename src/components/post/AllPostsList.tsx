@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { format } from "date-fns";
-import type { Post } from "@/lib/posts";
+import type { PostSummary } from "@/lib/post-summary";
 
 interface AllPostsListProps {
   currentSlug: string;
   currentCategory: string;
-  allPosts: Post[];
+  allPosts: PostSummary[];
 }
 
 /**
@@ -21,7 +21,7 @@ export default function AllPostsList({
 }: AllPostsListProps) {
   if (allPosts.length === 0) return null;
 
-  const byCategory = new Map<string, Post[]>();
+  const byCategory = new Map<string, PostSummary[]>();
   for (const post of allPosts) {
     const list = byCategory.get(post.category);
     if (list) list.push(post);

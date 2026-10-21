@@ -3,7 +3,7 @@ import type { PostSummary } from "@/lib/post-summary";
 
 export default function PostCover({ post, priority = false }: { post: PostSummary; priority?: boolean }) {
   return (
-    <div className="post-cover" style={{ background: `var(--thumb-${post.thumbnail})` }}>
+    <div className="post-cover" style={post.coverImage ? undefined : { background: `var(--thumb-${post.thumbnail})` }}>
       {post.coverImage ? (
         <img src={post.coverImage} alt="" loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} decoding="async" />
       ) : (

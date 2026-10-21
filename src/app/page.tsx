@@ -1,12 +1,13 @@
-import { getAllPosts } from "@/lib/posts";
+import { getPostSummaries } from "@/lib/posts";
 import LatestPosts from "@/components/LatestPosts";
 import PostList from "@/components/PostList";
 import { redis, postViewKey } from "@/lib/redis";
 
-export const dynamic = "force-dynamic";
+import { connection } from "next/server";
 
 export default async function HomePage() {
-  const posts = await getAllPosts();
+  await connection();
+  const posts = await getPostSummaries();
 
   // 모든 포스트 조회수를 Redis mget으로 한 번에 조회
   const viewsMap: Record<string, number> = {};
