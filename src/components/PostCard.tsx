@@ -1,22 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import type { PointerEvent } from "react";
 import { format } from "date-fns";
 import type { PostSummary } from "@/lib/post-summary";
 import PostCover from "./PostCover";
 
 export default function PostCard({ post, views }: { post: PostSummary; views?: number }) {
-  function moveGlow(event: PointerEvent<HTMLElement>) {
-    if (event.pointerType === "touch") return;
-    const rect = event.currentTarget.getBoundingClientRect();
-    event.currentTarget.style.setProperty("--pointer-x", `${event.clientX - rect.left}px`);
-    event.currentTarget.style.setProperty("--pointer-y", `${event.clientY - rect.top}px`);
-  }
   return (
     <article className="post-card">
       <Link href={`/posts/${post.slug}`} className="post-card-link">
-        <div className="post-card-media" onPointerMove={moveGlow}>
+        <div className="post-card-media">
           <PostCover post={post} />
         </div>
         <div className="post-card-content">
