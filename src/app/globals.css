@@ -15,7 +15,7 @@
    Green (Deku)  · Gold (All Might)  · Navy (UA)  · Red (Hero) */
 
 :root {
-  --background: #f9fbfc;
+  --background: #ffffff;
   --foreground: #1a2332;
   --card: #ffffff;
   --card-border: #dde4dd;
@@ -83,6 +83,24 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Progressive header blur: every layer fades out before the next, weaker
+   layer. The bottom reaches zero blur instead of ending at a hard rectangle.
+   Keep the mask on decorative layers so the navigation stays sharp. */
+.site-header-blur { position: absolute; inset: 0 0 -24px; pointer-events: none; }
+.site-header-blur span {
+  position: absolute;
+  inset: 0;
+  -webkit-backdrop-filter: blur(var(--header-blur));
+  backdrop-filter: blur(var(--header-blur));
+  -webkit-mask-image: linear-gradient(to bottom, #000 var(--fade-from), transparent var(--fade-to));
+  mask-image: linear-gradient(to bottom, #000 var(--fade-from), transparent var(--fade-to));
+}
+.site-header-blur span:nth-child(1) { --header-blur: 2px; --fade-from: 75%; --fade-to: 100%; }
+.site-header-blur span:nth-child(2) { --header-blur: 4px; --fade-from: 55%; --fade-to: 80%; }
+.site-header-blur span:nth-child(3) { --header-blur: 8px; --fade-from: 35%; --fade-to: 60%; }
+.site-header-blur span:nth-child(4) { --header-blur: 12px; --fade-from: 15%; --fade-to: 40%; }
+.site-header-blur span:nth-child(5) { --header-blur: 16px; --fade-from: 0%; --fade-to: 20%; }
+
 /* Gradient text */
 .gradient-text {
   background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
@@ -92,6 +110,18 @@ body {
 }
 
 /* Home surfaces share the site's light/dark tokens. */
+/* Soft color fields behind the homepage, fading before
+   the lower article rows. Theme tokens keep the treatment in sync with mode. */
+body:has(.home-shell) {
+  background-image:
+    radial-gradient(ellipse 68% 540px at 0% 80px,
+      color-mix(in srgb, var(--accent) 14%, transparent), transparent 78%),
+    radial-gradient(ellipse 62% 520px at 100% 220px,
+      color-mix(in srgb, #75a9db 16%, transparent), transparent 78%),
+    radial-gradient(ellipse 42% 340px at 45% 0,
+      color-mix(in srgb, var(--secondary) 7%, transparent), transparent 85%);
+  background-repeat: no-repeat;
+}
 .home-shell { max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; }
 .home-posts { margin-top: 52px; }
 .post-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 52px 64px; }
