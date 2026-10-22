@@ -35,12 +35,6 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
-  manifest: "/manifest.webmanifest",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "DEVS VLTRA",
-  },
   openGraph: {
     title: "DEVS VLTRA",
     description: "배운것들 정리합니다 — 개발 블로그 by 강건너물구경",
