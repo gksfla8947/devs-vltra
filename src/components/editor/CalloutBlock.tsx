@@ -1,6 +1,7 @@
 "use client";
 
 import { defaultProps } from "@blocknote/core";
+import type { BlockNoteEditor } from "@blocknote/core";
 import { createReactBlockSpec } from "@blocknote/react";
 import { Menu } from "@mantine/core";
 
@@ -27,20 +28,46 @@ export const Callout = createReactBlockSpec(
   {
     render: (props) => {
       const ct = calloutTypes.find((c) => c.value === props.block.props.type)!;
+      const addChild = () => {
+        // Custom block render props only infer their own block type; the shared
+        // editor schema also includes paragraphs, headings and other children.
+        const editor = props.editor as unknown as BlockNoteEditor;
+        const current = editor.getBlock(props.block.id)!;
+        const id = crypto.randomUUID();
+        editor.updateBlock(current, {
+          children: [...current.children, { id, type: "paragraph", content: [] }],
+        });
+        props.editor.setTextCursorPosition(id, "start");
+        props.editor.focus();
+      };
       return (
         <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            gap: "0.75rem",
-            padding: "1rem 1.25rem",
-            borderRadius: "0.5rem",
-            backgroundColor: ct.bg,
-            border: `1px solid ${ct.border}`,
-            width: "100%",
+          className="callout-title"
+          ref={(element) => {
+            if (!element) return;
+            // Native capture runs before ProseMirror's keyboard handler.
+            const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+            const selection = window.getSelection();
+            const content = element.querySelector(".callout-text");
+            if (!selection?.isCollapsed || !selection.rangeCount || !content?.contains(selection.anchorNode)) return;
+            const tail = selection.getRangeAt(0).cloneRange();
+            tail.selectNodeContents(content);
+            tail.setStart(selection.anchorNode!, selection.anchorOffset);
+            // Preserve native splitting when Enter is pressed in the middle of text.
+            if (tail.toString()) return;
+            event.preventDefault();
+            event.stopPropagation();
+            const first = props.editor.getBlock(props.block.id)?.children[0];
+            if (first) props.editor.setTextCursorPosition(first.id, "start");
+            else addChild();
+            };
+            const root = element.closest(".bn-editor");
+            root?.addEventListener("keydown", onKeyDown as EventListener, true);
+            return () => root?.removeEventListener("keydown", onKeyDown as EventListener, true);
           }}
         >
-          <Menu withinPortal={false}>
+          {props.editor.isEditable ? <Menu withinPortal={false}>
             <Menu.Target>
               <div
                 contentEditable={false}
@@ -67,8 +94,13 @@ export const Callout = createReactBlockSpec(
                 </Menu.Item>
               ))}
             </Menu.Dropdown>
-          </Menu>
-          <div style={{ flex: 1 }} ref={props.contentRef} />
+          </Menu> : <span aria-hidden="true">{ct.icon}</span>}
+          <div className="callout-text" ref={props.contentRef} />
+          {props.editor.isEditable && (
+            <button type="button" contentEditable={false} className="callout-add"
+              aria-label="Callout 내부 블록 추가" title="내부 블록 추가 · /로 제목, 목록, 이미지 선택"
+              onClick={addChild}>+</button>
+          )}
         </div>
       );
     },

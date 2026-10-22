@@ -27,6 +27,14 @@ const getCustomSlashMenuItems = (
 ): DefaultReactSuggestionItem[] => [
   ...getDefaultReactSlashMenuItems(editor),
   {
+    title: "Mermaid",
+    onItemClick: () => { insertOrUpdateBlockForSlashMenu(editor, { type: "mermaid" }); },
+    aliases: ["mermaid", "diagram", "다이어그램", "순서도"],
+    group: "Advanced",
+    icon: <span aria-hidden="true">◇</span>,
+    subtext: "코드로 작성하는 다이어그램",
+  },
+  {
     title: "Callout",
     onItemClick: () => {
       insertOrUpdateBlockForSlashMenu(editor, {

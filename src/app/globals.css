@@ -348,13 +348,36 @@ body:has(.post-article) { background: var(--reading-bg); }
   width: 100%;
 }
 
-/* Editor callout: wrap children visually inside the callout box */
+/* One surface for the title and native nested blocks, in both editor and reader. */
+.blocknote-editor .bn-block:has(> .node-callout) {
+  --callout-color: #e8f4fd;
+  background: var(--callout-color);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-block: 8px;
+}
+.blocknote-editor .bn-block:has(> .node-callout [data-type="warning"]) { --callout-color: #fff8e6; }
+.blocknote-editor .bn-block:has(> .node-callout [data-type="error"]) { --callout-color: #fde8e8; }
+.blocknote-editor .bn-block:has(> .node-callout [data-type="success"]) { --callout-color: #e8fde8; }
+.blocknote-editor .bn-block:has(> .node-callout [data-type="note"]) { --callout-color: #f0f0f0; }
+.dark .blocknote-editor .bn-block:has(> .node-callout) {
+  background: color-mix(in srgb, var(--callout-color) 12%, var(--reading-bg));
+}
 .blocknote-editor [data-content-type="callout"] {
   width: 100%;
 }
-
-.blocknote-editor [data-content-type="callout"] + [data-node-type="blockGroup"] {
-  margin-left: 0;
+.blocknote-editor .node-callout + [data-node-type="blockGroup"] {
+  margin-left: 2rem;
+  padding-left: 0;
+  border-left: none;
+}
+.callout-title { display: flex; align-items: flex-start; gap: 12px; width: 100%; }
+.blocknote-editor .bn-editor .node-callout + .bn-block-group > .bn-block-outer::before { display: none; }
+.callout-text { flex: 1; min-width: 0; }
+.callout-add { flex-shrink: 0; border-radius: 4px; width: 28px; height: 28px; color: var(--muted); cursor: pointer; }
+.callout-add:hover, .callout-add:focus-visible { background: var(--accent-glow); color: var(--accent); }
+@media (max-width: 639px) {
+  .blocknote-editor .bn-block:has(> .node-callout) { padding: 12px; }
 }
 
 .prose code:not(pre code) {
