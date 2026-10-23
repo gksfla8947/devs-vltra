@@ -112,7 +112,7 @@ body {
 /* Home surfaces share the site's light/dark tokens. */
 /* Soft color fields behind the homepage, fading before
    the lower article rows. Theme tokens keep the treatment in sync with mode. */
-body:has(.home-shell) {
+body:has(.home-shell, .about-shell) {
   background-image:
     radial-gradient(ellipse 68% 540px at 0% 80px,
       color-mix(in srgb, var(--accent) 14%, transparent), transparent 78%),
