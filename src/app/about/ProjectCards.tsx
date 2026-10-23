@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import Image from "next/image";
 import type { Project } from "./profile";
 import ProjectMedia from "./ProjectMedia";
 import styles from "./about.module.css";
@@ -34,7 +33,6 @@ export default function ProjectCards({ projects, variant = "cards" }: { projects
       className={styles.project} key={project.title} aria-haspopup="dialog"
       aria-label={`${project.title} 프로젝트 상세 보기`} onClick={() => setSelected(project)}>
       <span className={styles.projectNumber}>{String(index + 1).padStart(2, "0")}<span aria-hidden="true">↗</span></span>
-      {project.image && <span className={styles.projectThumbnail}><Image src={project.image} alt={`${project.title} 로고`} width={480} height={240} /></span>}
       <span className={styles.period}>{project.period}</span>
       <span className={styles.projectTitle}>{project.title}</span>
       {project.organization && <span className={styles.projectOrganization}>{project.organization}</span>}
