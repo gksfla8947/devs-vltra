@@ -6,7 +6,7 @@ import type { PostEditorRef } from "@/components/editor/PostEditor";
 
 const Editor = dynamic(() => import("@/components/editor/PostEditor"), { ssr: false });
 const Reader = dynamic(() => import("@/components/editor/PostRenderer"), { ssr: false });
-const sample = [{
+const sample = [{ type: "codeBlock", props: { language: "javascript" }, content: "const path = \"C:\\\\temp\";\nconst message = \"hello\";\nconsole.log(message);" }, {
   type: "callout", props: { type: "info" }, content: "콜아웃 예시",
   children: [
     { type: "heading", props: { level: 1 }, content: "제목1" },

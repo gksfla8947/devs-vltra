@@ -63,7 +63,7 @@
   --gradient-start: #4caf50;
   --gradient-mid: #f1c40f;
   --gradient-end: #e74c3c;
-  --code-bg: #111a2e;
+  --code-bg: #293241;
   --tag-bg: rgba(76, 175, 80, 0.12);
   --tag-text: #81c784;
   --tag-border: rgba(76, 175, 80, 0.25);
@@ -614,3 +614,45 @@ body:has(.post-article) { background: var(--reading-bg); }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--muted);
 }
+
+/* Shared code surface for editing and reading. */
+.blocknote-editor .bn-block-content[data-content-type="codeBlock"] {
+  background: var(--code-bg);
+  color: var(--foreground);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.blocknote-editor .bn-block-content[data-content-type="codeBlock"] > pre {
+  padding: 48px 20px 20px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.blocknote-editor .bn-block-content[data-content-type="codeBlock"] > div > select {
+  top: 10px;
+  left: 16px;
+  max-width: calc(100% - 100px);
+  color: var(--muted);
+  opacity: 1;
+  transition: none;
+}
+.blocknote-editor .shiki { color: var(--shiki-light); }
+.dark .blocknote-editor .shiki { color: var(--shiki-dark); }
+.code-copy-button {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 6px;
+  border: 1px solid var(--card-border);
+  border-radius: 5px;
+  background: var(--card);
+  color: var(--foreground);
+  font: 12px/1.5 sans-serif;
+  cursor: pointer;
+}
+.code-copy-button:hover { background: var(--accent-glow); }
+.code-copy-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
