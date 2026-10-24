@@ -7,6 +7,7 @@ export interface DraftItem {
   title: string;
   slug?: string;
   description: string;
+  coverImage?: string | null;
   category: string;
   tags: string[];
   blocks: unknown[];

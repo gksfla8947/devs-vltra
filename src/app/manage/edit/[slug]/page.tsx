@@ -8,6 +8,7 @@ import { updatePost } from "../../actions";
 import TagInput from "@/components/editor/TagInput";
 import CategoryInput from "@/components/editor/CategoryInput";
 import PublishModal from "@/components/editor/PublishModal";
+import { postImages } from "@/lib/post-images";
 import type { PostEditorRef } from "@/components/editor/PostEditor";
 
 const PostEditor = dynamic(() => import("@/components/editor/PostEditor"), {
@@ -23,6 +24,7 @@ interface PostData {
   id: string;
   title: string;
   description: string;
+  coverImage: string | null;
   category: string;
   tags: string[];
   content: unknown[];
@@ -42,6 +44,8 @@ export default function EditPostPage({
   const [post, setPost] = useState<PostData | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [images, setImages] = useState<string[]>([]);
   const [category, setCategory] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [published, setPublished] = useState(false);
@@ -69,6 +73,7 @@ export default function EditPostPage({
         setPost(p);
         setTitle(p.title);
         setDescription(p.description ?? "");
+        setCoverImage(p.coverImage ?? null);
         setCategory(p.category);
         setTags(p.tags ?? []);
         setPublished(p.published);
@@ -85,6 +90,7 @@ export default function EditPostPage({
     if (!category.trim()) { setError("카테고리를 입력하세요"); return; }
     setError("");
     setShowPublish(true);
+    setImages(postImages(editorRef.current?.getBlocks() ?? []));
   }
 
   async function handleConfirm() {
@@ -96,6 +102,7 @@ export default function EditPostPage({
       const result = await updatePost(slug, {
         title: title.trim(),
         description: description.trim(),
+        coverImage,
         category,
         tags,
         content: blocks,
@@ -195,6 +202,9 @@ export default function EditPostPage({
           slug={slug}
           description={description}
           published={published}
+          coverImage={coverImage}
+          images={images}
+          onCoverImageChange={setCoverImage}
           onSlugChange={() => {}}
           onDescriptionChange={setDescription}
           onPublishedChange={setPublished}

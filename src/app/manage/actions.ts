@@ -12,6 +12,17 @@ function assertAuth(authed: boolean) {
   if (!authed) throw new Error("Unauthorized");
 }
 
+function validateCoverImage(value: string | null | undefined) {
+  if (value == null) return;
+  if (typeof value !== "string" || value.length > 4096) throw new Error("올바른 썸네일 주소를 선택하세요.");
+  if (value.startsWith("/") && !value.startsWith("//")) return;
+  try {
+    const url = new URL(value);
+    if (url.protocol === "https:" || url.protocol === "http:") return;
+  } catch { /* Report the same validation error for malformed URLs. */ }
+  throw new Error("올바른 썸네일 주소를 선택하세요.");
+}
+
 /**
  * 모든 포스트 페이지의 캐시된 HTML 을 무효화.
  *
@@ -35,6 +46,7 @@ export async function createPost(data: {
   title: string;
   date: string;
   description: string;
+  coverImage?: string | null;
   category: string;
   tags: string[];
   content: unknown;
@@ -42,6 +54,7 @@ export async function createPost(data: {
   published: boolean;
 }) {
   assertAuth(await isAuthenticated());
+  validateCoverImage(data.coverImage);
   if (!data.category.trim()) throw new Error("카테고리를 입력하세요");
   if (/[^a-z0-9\-]/.test(data.id)) throw new Error("슬러그는 영문 소문자, 숫자, 하이픈만 사용 가능합니다");
 
@@ -50,6 +63,7 @@ export async function createPost(data: {
     title: data.title,
     date: data.date,
     description: data.description,
+    coverImage: data.coverImage,
     category: data.category,
     tags: data.tags,
     content: data.content,
@@ -67,6 +81,7 @@ export async function updatePost(
     title?: string;
     date?: string;
     description?: string;
+    coverImage?: string | null;
     category?: string;
     tags?: string[];
     content?: unknown;
@@ -75,6 +90,7 @@ export async function updatePost(
   }
 ) {
   assertAuth(await isAuthenticated());
+  validateCoverImage(data.coverImage);
 
   await db
     .update(posts)

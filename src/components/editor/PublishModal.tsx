@@ -1,12 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import ThumbnailPicker from "./ThumbnailPicker";
 
 interface PublishModalProps {
   title: string;
   slug: string;
   description: string;
   published: boolean;
+  coverImage: string | null;
+  images: string[];
+  onCoverImageChange: (url: string | null) => void;
   onSlugChange: (slug: string) => void;
   onDescriptionChange: (desc: string) => void;
   onPublishedChange: (pub: boolean) => void;
@@ -21,6 +25,9 @@ export default function PublishModal({
   slug,
   description,
   published,
+  coverImage,
+  images,
+  onCoverImageChange,
   onSlugChange,
   onDescriptionChange,
   onPublishedChange,
@@ -29,16 +36,17 @@ export default function PublishModal({
   saving,
   isEdit,
 }: PublishModalProps) {
+  const [uploading, setUploading] = useState(false);
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onCancel}
+        onClick={() => { if (!saving && !uploading) onCancel(); }}
       />
 
       {/* Modal */}
-      <div className="relative bg-[var(--card)] border border-[var(--card-border)] rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden animate-in">
+      <div role="dialog" aria-modal="true" aria-label={isEdit ? "포스트 수정 설정" : "포스트 출간 설정"} className="relative bg-[var(--card)] border border-[var(--card-border)] rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90dvh] overflow-y-auto animate-in">
         <div className="flex flex-col md:flex-row">
           {/* Left: Preview */}
           <div className="flex-1 p-8 border-b md:border-b-0 md:border-r border-[var(--card-border)]">
@@ -46,16 +54,7 @@ export default function PublishModal({
               포스트 미리보기
             </h3>
 
-            {/* Thumbnail placeholder */}
-            <div className="aspect-video rounded-lg bg-[var(--background)] border border-[var(--card-border)] flex items-center justify-center mb-5">
-              <div className="text-center text-[var(--muted)]/40">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="mx-auto mb-2 opacity-40">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                  <circle cx="8.5" cy="8.5" r="1.5"/>
-                  <polyline points="21 15 16 10 5 21"/>
-                </svg>
-              </div>
-            </div>
+            <ThumbnailPicker value={coverImage} images={images} slug={slug} disabled={saving} onChange={onCoverImageChange} onBusyChange={setUploading} />
 
             {/* Title preview */}
             <h2 className="text-lg font-bold text-[var(--foreground)] mb-3 line-clamp-2">
@@ -150,6 +149,7 @@ export default function PublishModal({
               <button
                 type="button"
                 onClick={onCancel}
+                disabled={saving || uploading}
                 className="px-5 py-2.5 text-sm font-medium text-[var(--accent)] hover:text-[var(--accent)]/80 transition-colors"
               >
                 취소
@@ -157,10 +157,10 @@ export default function PublishModal({
               <button
                 type="button"
                 onClick={onConfirm}
-                disabled={saving}
+                disabled={saving || uploading}
                 className="px-6 py-2.5 text-sm font-semibold rounded-lg bg-[var(--accent)] text-white hover:opacity-90 transition-opacity disabled:opacity-50"
               >
-                {saving ? "저장 중..." : "출간하기"}
+                {saving ? "저장 중..." : uploading ? "이미지 업로드 중…" : isEdit ? "수정 완료" : "출간하기"}
               </button>
             </div>
           </div>

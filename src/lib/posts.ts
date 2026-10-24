@@ -90,7 +90,7 @@ function dbPostToPost(row: typeof posts.$inferSelect): Post {
     content: html,
     blocks: Array.isArray(row.content) ? (row.content as unknown[]) : [],
     thumbnail: slugToThumbnail(row.id),
-    coverImage: extractCoverImage(html),
+    coverImage: row.coverImage ?? extractCoverImage(html),
   };
 }
 
@@ -109,7 +109,7 @@ export const getPostSummaries = cache(unstable_cache(async (): Promise<PostSumma
       description: posts.description,
       category: posts.category,
       tags: posts.tags,
-      coverImage: sql<string | null>`substring(${posts.contentHtml} from '<img[^>]+src="([^"]+)"')`,
+      coverImage: sql<string | null>`coalesce(${posts.coverImage}, substring(${posts.contentHtml} from '<img[^>]+src="([^"]+)"'))`,
     }).from(posts).where(eq(posts.published, true)).orderBy(desc(posts.date), desc(posts.id)),
   );
   return rows.map((row) => ({
@@ -118,7 +118,7 @@ export const getPostSummaries = cache(unstable_cache(async (): Promise<PostSumma
     tags: row.tags ?? [],
     thumbnail: slugToThumbnail(row.slug),
   }));
-}, ["post-summaries-v1"], { tags: [POST_LIST_TAG], revalidate: POST_CACHE_SECONDS }));
+}, ["post-summaries-v2"], { tags: [POST_LIST_TAG], revalidate: POST_CACHE_SECONDS }));
 
 // Request memoization shares the metadata/page read; persistent caching is per slug.
 // Editing one post does not expire the cached bodies of every other post.

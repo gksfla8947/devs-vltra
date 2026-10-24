@@ -8,6 +8,7 @@ import { createPost } from "../actions";
 import TagInput from "@/components/editor/TagInput";
 import CategoryInput from "@/components/editor/CategoryInput";
 import PublishModal from "@/components/editor/PublishModal";
+import { postImages } from "@/lib/post-images";
 import { draftStorage } from "@/hooks/useDraft";
 import type { PostEditorRef } from "@/components/editor/PostEditor";
 
@@ -49,6 +50,8 @@ function NewPostInner() {
   const [slug, setSlug] = useState("");
   const [slugManual, setSlugManual] = useState(false);
   const [description, setDescription] = useState("");
+  const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [images, setImages] = useState<string[]>([]);
   const [category, setCategory] = useState("DEV");
   const [tags, setTags] = useState<string[]>([]);
   const [published, setPublished] = useState(true);
@@ -86,6 +89,7 @@ function NewPostInner() {
     setSlug(draft.slug ?? "");
     setSlugManual(!!(draft as any).slug);
     setDescription(draft.description);
+    setCoverImage(draft.coverImage ?? null);
     setCategory(draft.category);
     setTags(draft.tags);
     setSavedAt(draft.savedAt);
@@ -118,7 +122,7 @@ function NewPostInner() {
   // Manual save
   async function handleManualSave() {
     const blocks = editorRef.current?.getBlocks() ?? [];
-    const id = draftStorage.save({ id: draftId, title, slug, description, category, tags, blocks });
+    const id = draftStorage.save({ id: draftId, title, slug, description, coverImage, category, tags, blocks });
     setDraftId(id);
     setSavedAt(Date.now());
   }
@@ -130,7 +134,7 @@ function NewPostInner() {
     const doSave = window.confirm("임시저장하시겠습니까?");
     if (doSave) {
       const blocks = editorRef.current?.getBlocks() ?? [];
-      draftStorage.save({ id: draftId, title, slug, description, category, tags, blocks });
+      draftStorage.save({ id: draftId, title, slug, description, coverImage, category, tags, blocks });
     }
     router.push("/manage");
   }
@@ -140,6 +144,7 @@ function NewPostInner() {
     if (!category.trim()) { setError("카테고리를 입력하세요"); return; }
     setError("");
     setShowPublish(true);
+    setImages(postImages(editorRef.current?.getBlocks() ?? []));
   }
 
   async function handleConfirm() {
@@ -154,6 +159,7 @@ function NewPostInner() {
         title: title.trim(),
         date: new Date().toISOString(),
         description: description.trim(),
+        coverImage,
         category,
         tags,
         content: blocks,
@@ -255,6 +261,9 @@ function NewPostInner() {
           slug={slug}
           description={description}
           published={published}
+          coverImage={coverImage}
+          images={images}
+          onCoverImageChange={setCoverImage}
           onSlugChange={(s) => { setSlugManual(true); setSlug(s); }}
           onDescriptionChange={setDescription}
           onPublishedChange={setPublished}

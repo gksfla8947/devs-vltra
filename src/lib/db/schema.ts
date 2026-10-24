@@ -16,6 +16,7 @@ export const posts = pgTable("posts", {
   title: text("title").notNull(),
   date: timestamp("date", { mode: "string" }).notNull(),
   description: text("description"),
+  coverImage: text("cover_image"),
   category: text("category").notNull().default("일반"),
   tags: text("tags").array(),
   content: jsonb("content").notNull(), // BlockNote JSON
