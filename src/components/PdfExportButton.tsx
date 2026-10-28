@@ -228,7 +228,7 @@ export default function PdfExportButton({ slug }: PdfExportButtonProps) {
     ${tags ? `<div class="tags">${tags}</div>` : ""}
   </div>
   <div class="content">${post.contentHtml ?? ""}</div>
-  <div class="footer">DEVS VLTRA · devs-vltra.vercel.app</div>
+  <div class="footer">DEVS VLTRA · devs-vltra.com</div>
   <script>
     window.onafterprint = () => window.close();
     setTimeout(() => window.print(), 500);

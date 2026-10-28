@@ -3,7 +3,7 @@ import { getPostSummaries } from "@/lib/posts";
 
 import { connection } from "next/server";
 
-const BASE_URL = "https://devs-vltra.vercel.app";
+import { SITE_URL as BASE_URL } from "@/lib/site";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   await connection();
@@ -19,10 +19,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     {
       url: BASE_URL,
-      lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 1,
     },
+    { url: `${BASE_URL}/about`, changeFrequency: "monthly", priority: 0.5 },
     ...postEntries,
   ];
 }

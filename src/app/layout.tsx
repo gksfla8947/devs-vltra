@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import "highlight.js/styles/github-dark.css";
 import "./globals.css";
+import { SITE_URL as BASE_URL } from "@/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,7 +19,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const BASE_URL = "https://devs-vltra.vercel.app";
 
 export const metadata: Metadata = {
   title: {

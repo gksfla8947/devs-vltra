@@ -9,6 +9,7 @@ import PostContent from "@/components/editor/PostContent";
 import PostNavigation from "@/components/post/PostNavigation";
 import AllPostsList from "@/components/post/AllPostsList";
 import PostReadingTools from "@/components/post/PostReadingTools";
+import { SITE_URL as BASE_URL } from "@/lib/site";
 
 type Params = Promise<{ slug: string }>;
 
@@ -22,7 +23,6 @@ export async function generateStaticParams() {
   return [];
 }
 
-const BASE_URL = "https://devs-vltra.vercel.app";
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
@@ -32,6 +32,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     return {
       title: post.title,
       description: post.description,
+      alternates: { canonical: `${BASE_URL}/posts/${slug}` },
       openGraph: {
         title: post.title,
         description: post.description,
