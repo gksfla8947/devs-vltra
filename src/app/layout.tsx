@@ -5,6 +5,7 @@ import ThemeProvider from "@/components/ThemeProvider";
 import SessionProviderWrapper from "@/components/SessionProviderWrapper";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import VisitTracker from "@/components/VisitTracker";
 import "highlight.js/styles/github-dark.css";
 import "./globals.css";
 import { SITE_URL as BASE_URL } from "@/lib/site";
@@ -82,6 +83,7 @@ export default function RootLayout({
             <main className="flex-1">{children}</main>
             <Footer />
             <Analytics />
+            <VisitTracker />
           </ThemeProvider>
         </SessionProviderWrapper>
       </body>

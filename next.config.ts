@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Login Server Function arguments contain credentials.
+  logging: { serverFunctions: false },
   images: {
     remotePatterns: [
       {

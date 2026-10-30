@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { posts, blobFiles } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { del } from "@vercel/blob";
 import { isAuthenticated } from "@/lib/auth";
 import { revalidatePath, updateTag } from "next/cache";
@@ -10,6 +10,35 @@ import { POST_LIST_TAG, postCacheTag } from "@/lib/post-cache";
 
 function assertAuth(authed: boolean) {
   if (!authed) throw new Error("Unauthorized");
+}
+
+export async function bulkUpdatePosts(ids: string[], action: "publish" | "unpublish" | "delete" | "category", category?: string) {
+  assertAuth(await isAuthenticated());
+  if (!Array.isArray(ids) || !ids.length || ids.length > 500 || ids.some((id) => typeof id !== "string" || !id || id.length > 200)) {
+    throw new Error("한 번에 1~500개의 글을 선택하세요.");
+  }
+  if (!["publish", "unpublish", "delete", "category"].includes(action)) throw new Error("올바른 작업을 선택하세요.");
+  if (action === "category" && (typeof category !== "string" || !category.trim() || category.trim().length > 100)) {
+    throw new Error("카테고리는 1~100자로 입력하세요.");
+  }
+  const selected = await db.select({ id: posts.id }).from(posts).where(inArray(posts.id, [...new Set(ids)]));
+  const succeeded: string[] = [];
+  const failed: string[] = [];
+  if (action === "delete") {
+    for (const { id } of selected) {
+      try { await deletePost(id); succeeded.push(id); }
+      catch { failed.push(id); }
+    }
+  } else if (selected.length) {
+    const rows = await db.update(posts).set({
+      ...(action === "category" ? { category: category!.trim() } : { published: action === "publish" }),
+      updatedAt: new Date().toISOString(),
+    }).where(inArray(posts.id, selected.map(({ id }) => id))).returning({ id: posts.id });
+    succeeded.push(...rows.map(({ id }) => id));
+    for (const id of succeeded) updateTag(postCacheTag(id));
+    revalidateAllPostPages();
+  }
+  return { succeeded, failed };
 }
 
 function validateCoverImage(value: string | null | undefined) {

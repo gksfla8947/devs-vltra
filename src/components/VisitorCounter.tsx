@@ -1,18 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { koreaDate } from "@/lib/stats-date";
 
 export default function VisitorCounter() {
   const [today, setToday] = useState<number | null>(null);
   const [total, setTotal] = useState<number | null>(null);
 
   useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = koreaDate();
     const lastVisit = localStorage.getItem("lastVisitDate");
     const method = lastVisit === today ? "GET" : "POST";
 
     fetch("/api/visitors", { method })
-      .then((res) => res.json())
+      .then((res) => { if (!res.ok) throw new Error("통계 요청 실패"); return res.json(); })
       .then((data) => {
         setToday(data.today);
         setTotal(data.total);

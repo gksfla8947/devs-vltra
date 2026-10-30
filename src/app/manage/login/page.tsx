@@ -15,12 +15,17 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const result = await login(password);
-
-    if (result.success) {
-      router.push("/manage");
-    } else {
-      setError(result.error ?? "로그인 실패");
+    try {
+      const result = await login(password);
+      if (result.success) {
+        router.replace("/manage");
+        router.refresh();
+      } else {
+        setError(result.error ?? "로그인 실패");
+      }
+    } catch {
+      setError("로그인 요청을 처리하지 못했습니다. 잠시 후 다시 시도하세요.");
+    } finally {
       setLoading(false);
     }
   }
@@ -54,12 +59,15 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="비밀번호"
             autoComplete="current-password"
+            aria-label="관리자 비밀번호"
+            spellCheck={false}
+            autoCapitalize="none"
             className="w-full px-4 py-3 rounded-lg border border-[var(--card-border)] bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             autoFocus
           />
 
           {error && (
-            <p className="text-sm text-red-500 text-center">{error}</p>
+            <p role="alert" className="text-sm text-red-500 text-center">{error}</p>
           )}
 
           <button
