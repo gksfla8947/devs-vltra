@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useListState, useListScroll } from "@/hooks/useListState";
 import PostCard from "./PostCard";
 import CategoryFilter from "./CategoryFilter";
 import type { PostSummary } from "@/lib/post-summary";
@@ -14,10 +14,11 @@ interface PostListProps {
 }
 
 export default function PostList({ posts, categories, viewsMap }: PostListProps) {
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [layout, setLayout] = useState<"grid" | "list">("grid");
+  const [activeCategory, setActiveCategory] = useListState<string | null>("posts:category", null);
+  const [search, setSearch] = useListState("posts:search", "");
+  const [visibleCount, setVisibleCount] = useListState("posts:count", PAGE_SIZE);
+  const [layout, setLayout] = useListState<"grid" | "list">("posts:layout", "grid");
+  useListScroll("posts");
   const query = search.trim().toLowerCase();
   const filtered = posts.filter((post) =>
     (activeCategory === null || post.category === activeCategory) &&

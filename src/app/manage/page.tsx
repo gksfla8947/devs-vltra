@@ -5,6 +5,7 @@ import Link from "next/link";
 import { deletePost, togglePublish } from "./actions";
 import Pagination from "@/components/Pagination";
 import PdfExportButton from "@/components/PdfExportButton";
+import { useListState, useListScroll } from "@/hooks/useListState";
 
 interface PostRow {
   id: string;
@@ -17,9 +18,10 @@ interface PostRow {
 export default function ManagePage() {
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [search, setSearch] = useListState("manage:search", "");
+  const [page, setPage] = useListState("manage:page", 1);
+  const [pageSize, setPageSize] = useListState("manage:pageSize", 10);
+  useListScroll("manage", !loading);
 
   useEffect(() => {
     fetch("/api/manage/posts")
@@ -54,7 +56,8 @@ export default function ManagePage() {
     );
   });
 
-  const start = (page - 1) * pageSize;
+  const currentPage = Math.min(page, Math.max(1, Math.ceil(filtered.length / pageSize)));
+  const start = (currentPage - 1) * pageSize;
   const paged = filtered.slice(start, start + pageSize);
 
   return (
@@ -187,7 +190,7 @@ export default function ManagePage() {
             </div>
 
             <Pagination
-              currentPage={page}
+              currentPage={currentPage}
               totalItems={filtered.length}
               pageSize={pageSize}
               onPageChange={setPage}
