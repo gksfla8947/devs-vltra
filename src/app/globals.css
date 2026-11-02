@@ -83,23 +83,18 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Progressive header blur: every layer fades out before the next, weaker
-   layer. The bottom reaches zero blur instead of ending at a hard rectangle.
-   Keep the mask on decorative layers so the navigation stays sharp. */
-.site-header-blur { position: absolute; inset: 0 0 -24px; pointer-events: none; }
-.site-header-blur span {
+/* A static fade preserves the soft header edge without re-filtering the
+   scrolling page through overlapping full-width backdrop blur layers. */
+.site-header-surface {
   position: absolute;
-  inset: 0;
-  -webkit-backdrop-filter: blur(var(--header-blur));
-  backdrop-filter: blur(var(--header-blur));
-  -webkit-mask-image: linear-gradient(to bottom, #000 var(--fade-from), transparent var(--fade-to));
-  mask-image: linear-gradient(to bottom, #000 var(--fade-from), transparent var(--fade-to));
+  inset: 0 0 -24px;
+  pointer-events: none;
+  background: linear-gradient(to bottom,
+    var(--background) 0%,
+    color-mix(in srgb, var(--background) 96%, transparent) 55%,
+    color-mix(in srgb, var(--background) 80%, transparent) 72%,
+    transparent 100%);
 }
-.site-header-blur span:nth-child(1) { --header-blur: 2px; --fade-from: 75%; --fade-to: 100%; }
-.site-header-blur span:nth-child(2) { --header-blur: 4px; --fade-from: 55%; --fade-to: 80%; }
-.site-header-blur span:nth-child(3) { --header-blur: 8px; --fade-from: 35%; --fade-to: 60%; }
-.site-header-blur span:nth-child(4) { --header-blur: 12px; --fade-from: 15%; --fade-to: 40%; }
-.site-header-blur span:nth-child(5) { --header-blur: 16px; --fade-from: 0%; --fade-to: 20%; }
 
 /* Gradient text */
 .gradient-text {

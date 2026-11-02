@@ -51,11 +51,29 @@ export function useListScroll(key: string, ready = true) {
     const pathname = window.location.pathname;
     const saved = read(storageKey);
     let frame = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let pendingY: number | undefined;
     let restoring = true;
+    const flush = () => {
+      clearTimeout(timer);
+      timer = undefined;
+      if (pendingY !== undefined) {
+        write(storageKey, String(pendingY));
+        pendingY = undefined;
+      }
+    };
     const save = () => {
       if (!restoring && window.location.pathname === pathname) {
-        write(storageKey, String(window.scrollY));
+        pendingY = window.scrollY;
+        flush();
       }
+    };
+    const onScroll = () => {
+      if (restoring || window.location.pathname !== pathname) return;
+      pendingY = window.scrollY;
+      clearTimeout(timer);
+      // sessionStorage is synchronous: persist once scrolling pauses, not per frame.
+      timer = setTimeout(flush, 150);
     };
     // Let Next's navigation scroll finish before restoring the expanded list.
     frame = requestAnimationFrame(() => {
@@ -67,12 +85,13 @@ export function useListScroll(key: string, ready = true) {
         restoring = false;
       });
     });
-    window.addEventListener("scroll", save, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("pagehide", save);
     document.addEventListener("click", save, true);
     return () => {
       cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", save);
+      flush();
+      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("pagehide", save);
       document.removeEventListener("click", save, true);
     };

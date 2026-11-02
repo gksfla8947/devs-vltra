@@ -4,9 +4,7 @@ import ThemeToggle from "./ThemeToggle";
 export default function Header() {
   return (
     <header className="site-header sticky top-0 z-50 bg-transparent">
-      <div className="site-header-blur" aria-hidden="true">
-        <span /><span /><span /><span /><span />
-      </div>
+      <div className="site-header-surface" aria-hidden="true" />
       <div className="relative z-10 w-full px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         <Link href="/" className="flex shrink-0 items-center gap-2 hover:opacity-80 transition-opacity rounded-sm focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-4">
           {/* eslint-disable-next-line @next/next/no-img-element -- Small local SVG needs no raster optimization. */}
