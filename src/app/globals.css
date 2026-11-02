@@ -109,11 +109,12 @@ body {
    the lower article rows. Theme tokens keep the treatment in sync with mode. */
 body:has(.home-shell, .about-shell) {
   background-image:
-    radial-gradient(ellipse 68% 540px at 0% 80px,
+    linear-gradient(to bottom, var(--background) 72px, transparent 280px),
+    radial-gradient(ellipse 68% 540px at 0% 280px,
       color-mix(in srgb, var(--accent) 14%, transparent), transparent 78%),
-    radial-gradient(ellipse 62% 520px at 100% 220px,
+    radial-gradient(ellipse 62% 520px at 100% 420px,
       color-mix(in srgb, #75a9db 16%, transparent), transparent 78%),
-    radial-gradient(ellipse 42% 340px at 45% 0,
+    radial-gradient(ellipse 42% 340px at 45% 200px,
       color-mix(in srgb, var(--secondary) 7%, transparent), transparent 85%);
   background-repeat: no-repeat;
 }
