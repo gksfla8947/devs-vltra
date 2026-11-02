@@ -47,4 +47,18 @@ next-env.d.ts
 # agent settings
 /.claude
 /.vscode
-.CLAUDE.md
+/CLAUDE.md
+
+# local-only assets, legacy utilities, and design previews
+/public/profile.svg
+/public/file.svg
+/public/globe.svg
+/public/next.svg
+/public/vercel.svg
+/public/window.svg
+/src/components/CodeHighlight.tsx
+/src/components/VisitorCounter.tsx
+/src/lib/render-blocks.ts
+/src/app/design-check/
+/scripts/migrate-posts.ts
+/scripts/migrate-images.ts
