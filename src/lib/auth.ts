@@ -1,27 +1,16 @@
-import { SignJWT, jwtVerify } from "jose";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { verifyToken } from "./admin-token";
+export { signToken, verifyToken } from "./admin-token";
 
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? "fallback-dev-secret");
 const COOKIE_NAME = "admin_token";
 
-export async function signToken(): Promise<string> {
-  return new SignJWT({ role: "admin" })
-    .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime("7d")
-    .sign(SECRET);
-}
-
-export async function verifyToken(token: string): Promise<boolean> {
-  try {
-    await jwtVerify(token, SECRET);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export async function verifyPassword(password: string): Promise<boolean> {
-  return password === process.env.ADMIN_PASSWORD;
+  const expected = process.env.ADMIN_PASSWORD;
+  if (!expected?.trim()) throw new Error("ADMIN_PASSWORD must be configured.");
+  if (typeof password !== "string" || password.length > 1024) return false;
+  const hash = (text: string) => createHash("sha256").update(text).digest();
+  return timingSafeEqual(hash(password), hash(expected));
 }
 
 export async function setAuthCookie(token: string) {

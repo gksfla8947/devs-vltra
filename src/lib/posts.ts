@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { posts } from "./db/schema";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import type { PostSummary } from "./post-summary";
@@ -125,14 +125,21 @@ export const getPostSummaries = cache(unstable_cache(async (): Promise<PostSumma
 export const getPostBySlug = cache(async (slug: string): Promise<Post | null> =>
   unstable_cache(async () => {
     const rows = await withDbRetry(() =>
-      db.select().from(posts).where(eq(posts.id, slug)).limit(1),
+      db.select().from(posts).where(and(eq(posts.id, slug), eq(posts.published, true))).limit(1),
     );
     return rows.length ? dbPostToPost(rows[0]) : null;
-  }, ["post-detail-v1", slug], {
+  }, ["post-detail-public-v2", slug], {
     tags: [postCacheTag(slug)],
     revalidate: POST_CACHE_SECONDS,
   })(),
 );
+
+// Request-only memoization: publication changes must not wait for a cached body/HTML to expire.
+export const getPostVisibility = cache(async (slug: string): Promise<"public" | "private" | "missing"> => {
+  if (!/^[a-z0-9-]{1,200}$/.test(slug)) return "missing";
+  const rows = await withDbRetry(() => db.select({ published: posts.published }).from(posts).where(eq(posts.id, slug)).limit(1));
+  return rows.length ? rows[0].published === true ? "public" : "private" : "missing";
+});
 
 export async function getAllCategories(): Promise<string[]> {
   return Array.from(new Set((await getPostSummaries()).map((post) => post.category))).sort();

@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { jwtVerify } from "jose";
-
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? "fallback-dev-secret");
+import { verifyToken } from "@/lib/admin-token";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -18,12 +16,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/manage/login", request.url));
   }
 
-  try {
-    await jwtVerify(token, SECRET);
+  if (await verifyToken(token)) {
     return NextResponse.next();
-  } catch {
-    return NextResponse.redirect(new URL("/manage/login", request.url));
   }
+  return NextResponse.redirect(new URL("/manage/login", request.url));
 }
 
 export const config = {

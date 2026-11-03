@@ -78,7 +78,7 @@ export default function VisitStats({ preview, onReady }: { preview?: StatsData; 
           <button className={button} disabled={!offset} onClick={() => { setOffset(offset - 1); setHover(null); }} aria-label="다음 기간">→</button>
         </div>
       </div>
-      <p className="text-xs leading-6 text-[var(--muted)]">{data.started ? `${data.started}부터 기간별 집계 · 첫날과 진행 중인 기간은 일부 기록만 포함합니다.` : "기간별 통계는 기능 적용 후 첫 방문 또는 글 조회부터 수집됩니다."}<br />조회수는 브라우저별 글당 하루 1회, 방문자는 브라우저별 하루 1회 집계합니다. 누적 방문자는 일별 방문자의 누적이며, 누적 조회수는 현재 등록된 글의 합계입니다. 미집계 기간은 —로 표시합니다.</p>
+      <p className="text-xs leading-6 text-[var(--muted)]">{data.started ? `${data.started}부터 기간별 집계 · 첫날과 진행 중인 기간은 일부 기록만 포함합니다.` : "기간별 통계는 기능 적용 후 첫 방문 또는 글 조회부터 수집됩니다."}<br />IP·브라우저 정보를 기준으로 하루 중복 방문·글 조회를 제외합니다. 같은 네트워크·브라우저는 함께 집계될 수 있습니다. 누적 방문자는 일별 방문자의 누적이며, 누적 조회수는 현재 등록된 글의 합계입니다. 미집계 기간은 —로 표시합니다.</p>
     </>}
   </section>;
 }

@@ -20,7 +20,7 @@
 
 | 영역 | 구성 |
 | --- | --- |
-| 웹 | Next.js 16.2.3 App Router, React 19.2.4, TypeScript |
+| 웹 | Next.js 16.4.4 App Router, React 19.2.4, TypeScript |
 | 스타일 | Tailwind CSS 4, CSS Modules, next-themes |
 | 에디터 | BlockNote 0.47, Mantine 8, Mermaid |
 | 데이터베이스 | Neon PostgreSQL, Drizzle ORM |
@@ -47,7 +47,7 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST/DATABASE?sslmode=require
 
 # 관리자 로그인: /manage/login
 ADMIN_PASSWORD=replace-with-an-admin-password
-JWT_SECRET=replace-with-a-random-secret
+JWT_SECRET=replace-with-at-least-32-random-bytes
 
 # Vercel Blob
 BLOB_READ_WRITE_TOKEN=replace-with-a-blob-token
@@ -127,13 +127,13 @@ public/                       # 아이콘, 기관 로고, 포트폴리오 이미
 
 `posts.content`의 **BlockNote JSON이 본문 원본**입니다. 작성·수정과 본문 표시에 사용합니다. `content_html`은 저장 시 함께 생성하는 HTML로, 기존 글의 편집 복원과 썸네일 자동 추출 등에 사용합니다.
 
-`cover_image`에 지정한 썸네일이 있으면 이를 우선 사용하고, 없으면 본문 HTML의 첫 이미지를 사용합니다. 글 목록·상세 조회는 기본 1시간 캐시하며, 관리자에서 글을 변경하면 관련 캐시와 사이트맵을 갱신합니다.
+`cover_image`에 지정한 썸네일이 있으면 이를 우선 사용하고, 없으면 본문 HTML의 첫 이미지를 사용합니다. 공개 글 목록·본문은 기본 1시간 캐시하며, 관리자에서 글을 변경하면 관련 캐시와 사이트맵을 갱신합니다. 상세 페이지는 매 요청마다 공개 상태를 확인하며 비공개 글에는 제목·본문 대신 “비공개 글입니다”만 표시하고 검색 색인을 차단합니다. 비공개 글의 댓글·조회수 API도 차단합니다.
 
 임시글은 DB가 아닌 **해당 브라우저의 localStorage**에 저장합니다. 브라우저 데이터를 지우거나 다른 기기로 접속하면 임시글을 사용할 수 없습니다.
 
 ### 이미지
 
-이미지 원본은 Vercel Blob에, URL·경로·크기 등의 메타데이터는 `blob_files`에 저장합니다. 새 업로드 경로는 다음과 같습니다.
+업로드 이미지는 서버에서 JPG·PNG·WebP·GIF의 실제 형식을 검사하고 재인코딩한 뒤 Vercel Blob에 저장합니다. 파일당 4MiB, 4천만 픽셀, 200프레임을 제한하며 확장자·MIME 불일치, 손상된 파일과 SVG·HTML·동영상 업로드는 거절합니다. 메타데이터는 `blob_files`에 저장합니다. 새 업로드 경로는 다음과 같습니다.
 
 ```text
 devs-vltra/{postSlug 또는 uploads}/{UUID}.{확장자}
@@ -143,9 +143,29 @@ devs-vltra/{postSlug 또는 uploads}/{UUID}.{확장자}
 
 ### 방문 통계
 
-한국 시간 기준으로 조회수는 브라우저별 글당 하루 1회, 방문자는 브라우저별 하루 1회 집계합니다. 중복 판정에는 localStorage를 사용합니다. 누적 방문자는 일별 방문자의 누적이며, 서로 다른 사람의 정확한 수를 뜻하지 않습니다.
+한국 시간 기준으로 조회수는 글당 하루 1회, 방문자는 하루 1회 중복 제거합니다. localStorage는 불필요한 요청을 줄이는 용도이며 실제 중복 판정은 서버에서 IP·User-Agent의 HMAC과 Redis 원자 연산으로 수행합니다. 원본 IP·User-Agent는 Redis에 저장하지 않고 중복 판정 키는 48시간 후 만료됩니다. 같은 네트워크·브라우저는 합산될 수 있고, IP·브라우저가 바뀌면 별도 집계될 수 있습니다. 누적 방문자는 일별 방문자의 누적이며, 서로 다른 사람의 정확한 수를 뜻하지 않습니다.
 
 기간별 기록을 수집하기 전의 날짜는 미집계로 표시합니다. 관리자·개발용 확인 화면은 방문자 집계 대상에서 제외합니다.
+
+## 보안 설정과 검증
+
+- `JWT_SECRET`은 필수이며 기본값이 없습니다. 공백 없는 최소 32바이트의 무작위 값을 사용합니다. 로컬은 `.env.local`, 운영은 **Vercel → 프로젝트 → Settings → Environment Variables**에 같은 이름으로 등록한 후 재배포합니다. `NEXT_PUBLIC_` 접두사를 붙이지 않습니다.
+- 새 비밀키는 로컬 터미널에서 `openssl rand -hex 32`로 생성할 수 있습니다. 출력값을 환경변수에 저장하고 Git이나 대화에 공유하지 않습니다. `AUTH_SECRET`은 댓글 로그인용 별도 비밀키입니다.
+- `ADMIN_PASSWORD`도 필수입니다. 기존 값을 자동 변경하지 않으며, 16자 이상의 충분히 긴 비밀번호를 권장합니다. 새 관리자 JWT는 issuer·audience·role·만료를 검증하므로 이번 인증 변경 후 기존 관리자 세션은 다시 로그인해야 합니다.
+- 로그인은 IP당 15분에 5회, 조회수 API는 IP당 분당 60회, 방문 통계 API는 IP당 분당 30회, 업로드는 IP당 분당 30회로 제한합니다. 댓글 작성은 계정당 분당 5회·시간당 20회로 제한합니다. Redis 장애 시 제한을 우회하지 않고 요청을 거절합니다.
+- Vercel에서는 플랫폼이 설정하는 `x-vercel-forwarded-for`만 신뢰합니다. 로컬·다른 호스팅에서는 임의 전달 헤더를 신뢰하지 않고 공통 제한을 사용합니다. 다른 호스팅에 배포한다면 신뢰 가능한 프록시 정책을 먼저 구성해야 합니다.
+- Blob 저장소는 현재 **Public**입니다. 비공개 글 접근 차단이 기존 이미지 URL의 공개 접근까지 차단하지는 않습니다. Private Blob 전환·기존 파일 이전은 별도 작업입니다.
+- BlockNote의 UUID와 Typography의 선택자 파서는 호환되는 보안 패치 버전을 `overrides`로 지정했습니다. 향후 상위 패키지가 수정 버전을 포함하면 override를 제거할 수 있습니다.
+
+```bash
+# 네트워크 없는 인증·요청·이미지 검증 회귀 테스트
+node --import tsx --test src/lib/security.test.ts src/lib/stats-date.test.ts
+
+# 선택: Redis 임시 UUID 키만 생성·검증·삭제 (기존 통계는 변경하지 않음)
+RUN_REDIS_SECURITY_TESTS=1 node --env-file=.env.local --import tsx --test src/lib/security.redis.test.ts
+
+npm audit --omit=dev
+```
 
 ## 백업과 복구
 

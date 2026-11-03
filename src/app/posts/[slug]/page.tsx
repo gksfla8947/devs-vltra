@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { getPostSummaries, getPostBySlug } from "@/lib/posts";
+import { getPostSummaries, getPostBySlug, getPostVisibility } from "@/lib/posts";
+import { connection } from "next/server";
 import { format } from "date-fns";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -13,20 +14,16 @@ import { SITE_URL as BASE_URL } from "@/lib/site";
 
 type Params = Promise<{ slug: string }>;
 
-// ISR 안전망: revalidatePath 호출이 누락되거나 DB 직접 편집이 일어나도
-// 최대 1시간 안에 PostNavigation·AllPostsList 가 갱신된다.
-// 일반 흐름(글 작성/수정/삭제)은 actions.ts 의 revalidateAllPostPages 로 즉시 무효화됨.
-export const revalidate = 3600;
-
-// Generate/cache each article on its first visit instead of reading every body at build time.
-export async function generateStaticParams() {
-  return [];
-}
+// Render per request so an old page cache cannot expose an unpublished article.
+// Public bodies/listing data retain their independently invalidated Data Cache.
 
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  await connection();
   const { slug } = await params;
   try {
+    const visibility = await getPostVisibility(slug);
+    if (visibility !== "public") return { title: visibility === "private" ? "비공개 글입니다" : "Not Found", robots: { index: false, follow: false } };
     const post = await getPostBySlug(slug);
     if (!post) return { title: "Not Found" };
     return {
@@ -53,8 +50,14 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 }
 
 export default async function PostPage({ params }: { params: Params }) {
+  await connection();
   const { slug } = await params;
-
+  const visibility = await getPostVisibility(slug);
+  if (visibility === "missing") notFound();
+  if (visibility === "private") return <article className="post-article"><header className="post-heading">
+    <h1 className="post-heading-title">비공개 글입니다</h1>
+    <Link href="/" className="post-back-link">← 목록으로</Link>
+  </header></article>;
   const post = await getPostBySlug(slug);
   if (!post) notFound();
 

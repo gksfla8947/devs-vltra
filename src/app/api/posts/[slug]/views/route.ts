@@ -1,23 +1,24 @@
-import { NextRequest, NextResponse } from "next/server";
 import { redis, postViewKey } from "@/lib/redis";
-import { koreaDate } from "@/lib/stats-date";
+import { getPostVisibility } from "@/lib/posts";
+import { allowRequest } from "@/lib/rate-limit";
+import { clientIdentity, isSameOriginRequest, tooManyRequests } from "@/lib/request-security";
+import { trackPostView } from "@/lib/visit-tracking";
 
 type Params = { params: Promise<{ slug: string }> };
 
-// GET  /api/posts/[slug]/views — 현재 조회수 반환
-export async function GET(_req: NextRequest, { params }: Params) {
-  const { slug } = await params;
-  const views = await redis.get<number>(postViewKey(slug));
-  return NextResponse.json({ views: views ?? 0 });
+async function handle(request: Request, { params }: Params, increment: boolean) {
+  try {
+    if (increment && !isSameOriginRequest(request)) return Response.json({ error: "Forbidden" }, { status: 403 });
+    if (!(await allowRequest("views", clientIdentity(request.headers), 60, 60))) return tooManyRequests(60);
+    const { slug } = await params;
+    // Never create Redis counters for arbitrary/private slugs.
+    if (await getPostVisibility(slug) !== "public") return Response.json({ error: "Not found" }, { status: 404 });
+    const views = increment ? await trackPostView(request.headers, slug) : await redis.get<number>(postViewKey(slug)) ?? 0;
+    return Response.json({ views }, { headers: { "Cache-Control": "no-store" } });
+  } catch {
+    return Response.json({ error: "조회 집계를 사용할 수 없습니다." }, { status: 503 });
+  }
 }
 
-// POST /api/posts/[slug]/views — 조회수 1 증가 후 반환
-export async function POST(_req: NextRequest, { params }: Params) {
-  const { slug } = await params;
-  const today = koreaDate();
-  const result = await redis.multi().incr(postViewKey(slug))
-    .hincrby("stats:v1:views", today, 1)
-    .set("stats:v1:started", today, { nx: true }).exec();
-  const views = Number(result[0]);
-  return NextResponse.json({ views });
-}
+export async function GET(request: Request, context: Params) { return handle(request, context, false); }
+export async function POST(request: Request, context: Params) { return handle(request, context, true); }
